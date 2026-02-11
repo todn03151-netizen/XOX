@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>XOX ULTIMATE</title>
+
+<style>
+*{box-sizing:border-box;font-family:Poppins,Arial}
+body{
+ margin:0;height:100vh;display:flex;justify-content:center;align-items:center;
+ background:linear-gradient(135deg,#000428,#004e92);
+ color:#fff
+}
+.hidden{display:none}
+.card{
+ background:rgba(0,0,0,.7);
+ padding:25px;
+ width:360px;
+ border-radius:18px;
+ text-align:center;
+ box-shadow:0 0 25px rgba(0,255,255,.4)
+}
+h2{margin:5px 0 15px}
+input,select,button{
+ width:100%;padding:12px;margin:8px 0;
+ border-radius:14px;border:none;font-size:15px
+}
+input{background:#111;color:#0ff;border:1px solid #0ff}
+button{
+ background:linear-gradient(135deg,#00ffcc,#00bcd4);
+ font-weight:bold;cursor:pointer
+}
+button:active{transform:scale(.97)}
+.board{
+ display:grid;grid-template-columns:repeat(3,1fr);
+ gap:10px;margin:15px 0
+}
+.cell{
+ height:90px;font-size:42px;border-radius:14px;
+ background:rgba(255,255,255,.15);border:none;color:#fff
+}
+.cell.win{background:#00ff88;color:#000}
+.info{margin:8px 0}
+hr{border:.5px solid #555;margin:10px 0}
+.menuBtn{display:flex;gap:10px}
+.menuBtn button{width:50%}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="card" id="login">
+ <h2>🔐 LOGIN</h2>
+ <input id="user" placeholder="Username">
+ <input id="pw" type="password" placeholder="Password">
+ <button onclick="doLogin()">MASUK</button>
+ <div style="font-size:12px;opacity:.7">user: <b>bandit</b> | pw: <b>123</b></div>
+</div>
+
+<!-- MENU -->
+<div class="card hidden" id="menu">
+ <h2>🎮 MENU GAME</h2>
+ <button onclick="startBot()">Player vs Bot</button>
+ <button onclick="showPvpForm()">Player vs Player</button>
+</div>
+
+<!-- PVP FORM -->
+<div class="card hidden" id="pvpForm">
+ <h2>👥 Masukkan Nama</h2>
+ <input id="p1Input" placeholder="Nama Pemain 1 (X)">
+ <input id="p2Input" placeholder="Nama Pemain 2 (O)">
+ <button onclick="startPvp()">OK & Mulai</button>
+</div>
+
+<!-- GAME -->
+<div class="card hidden" id="game">
+ <h2 id="modeTitle">X O X</h2>
+
+ <div class="info" id="info"></div>
+
+ <div id="scoreBox"></div>
+
+ <div class="board" id="board"></div>
+
+ <div class="menuBtn">
+  <button onclick="home()">🏠 Home</button>
+  <button onclick="resetScore()">🔄 Reset</button>
+ </div>
+</div>
+
+<script>
+function doLogin(){
+ if(user.value==="bandit" && pw.value==="123"){
+  login.classList.add("hidden");
+  menu.classList.remove("hidden");
+ }else alert("Username / Password salah");
+}
+
+let board=[],turn="X",mode="";
+let p1="Player 1",p2="Player 2";
+let score={
+ p1:{win:0,lose:0,draw:0},
+ p2:{win:0,lose:0,draw:0}
+};
+
+const winP=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const boardDiv=document.getElementById("board");
+const scoreBox=document.getElementById("scoreBox");
+
+function showPvpForm(){
+ menu.classList.add("hidden");
+ pvpForm.classList.remove("hidden");
+}
+
+function startPvp(){
+ p1=p1Input.value||"Pemain 1";
+ p2=p2Input.value||"Pemain 2";
+ mode="pvp";
+ pvpForm.classList.add("hidden");
+ game.classList.remove("hidden");
+ modeTitle.innerText="Player vs Player";
+ newRound();
+}
+
+function startBot(){
+ mode="bot";
+ p1="Player";
+ p2="Bot";
+ menu.classList.add("hidden");
+ game.classList.remove("hidden");
+ modeTitle.innerText="Player vs Bot";
+ newRound();
+}
+
+function newRound(){
+ board=["","","","","","","","",""];
+ turn="X";
+ boardDiv.innerHTML="";
+ for(let i=0;i<9;i++){
+  let b=document.createElement("button");
+  b.className="cell";
+  b.onclick=()=>play(i);
+  boardDiv.appendChild(b);
+ }
+ updateInfo();
+ updateScore();
+}
+
+function play(i){
+ if(board[i]) return;
+ board[i]=turn;
+ render();
+ if(check(turn)) return end(turn);
+ if(full()) return end("draw");
+ turn=turn==="X"?"O":"X";
+ updateInfo();
+}
+
+function render(){
+ [...boardDiv.children].forEach((c,i)=>c.innerText=board[i]);
+}
+
+function updateInfo(){
+ info.innerText="Giliran: "+(turn==="X"?p1:p2);
+}
+
+function check(p){
+ for(let w of winP){
+  if(w.every(i=>board[i]===p)){
+   w.forEach(i=>boardDiv.children[i].classList.add("win"));
+   return true;
+  }
+ }
+ return false;
+}
+
+function full(){return board.every(c=>c);}
+
+function end(r){
+ if(r==="draw"){
+  score.p1.draw++; score.p2.draw++;
+ }else if(r==="X"){
+  score.p1.win++; score.p2.lose++;
+ }else{
+  score.p2.win++; score.p1.lose++;
+ }
+ updateScore();
+ setTimeout(newRound,700);
+}
+
+function updateScore(){
+ scoreBox.innerHTML=`
+ <b>${p1}</b><br>
+ Menang: ${score.p1.win}<br>
+ Kalah: ${score.p1.lose}<br>
+ Seri: ${score.p1.draw}
+ <hr>
+ <b>${p2}</b><br>
+ Menang: ${score.p2.win}<br>
+ Kalah: ${score.p2.lose}<br>
+ Seri: ${score.p2.draw}
+ `;
+}
+
+function home(){
+ game.classList.add("hidden");
+ menu.classList.remove("hidden");
+}
+
+function resetScore(){
+ score={
+  p1:{win:0,lose:0,draw:0},
+  p2:{win:0,lose:0,draw:0}
+ };
+ updateScore();
+}
+</script>
+</body>
+</html>
